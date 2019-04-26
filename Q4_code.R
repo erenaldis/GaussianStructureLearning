@@ -48,7 +48,7 @@ dev.off()
 data_mis <- read.csv(file="hw3_data/data_missing.txt", header=TRUE, sep=" ")
 imp <- mice(data_mis, m=10, printFlag = FALSE)
 
-A < - matrix( 0, nrow = 20, ncol = 20)
+A <- matrix( 0, nrow = 20, ncol = 20)
 
 for (m in 1:10) {
   data_complete <- complete(imp, m)
@@ -59,28 +59,19 @@ for (m in 1:10) {
   scores <- c()
   num_edges <- c()
   
-  for (alpha in alphas) {
-    ## estimate CPDAG
-    pc.fit <- pc(suffStat = list(C = cor(data_complete), n = n),
-                 indepTest = gaussCItest, ## indep.test: partial correlations
-                 alpha=alpha, labels = V)
-    sample_dag <- pdag2dag(pc.fit@graph)$graph
-    score <- new("GaussL0penObsScore", data_complete)
-    scores <- c(scores, score$global.score(as(sample_dag, "GaussParDAG")))
-  }
   
-  optimal.alpha <- alphas[which.max(scores)]
+  ## estimate CPDAG
   pc.fit <- pc(suffStat = list(C = cor(data_complete), n = n),
                indepTest = gaussCItest, ## indep.test: partial correlations
-               alpha=optimal.alpha, labels = V)
+               alpha=0.05, labels = V)
   A <- A + as(pc.fit, "amat")
 }
 
 A_mean <- round(A/10)
 
-d<-network(A_mean)
+d<-graph_from_adjacency_matrix(A_mean)
 jpeg('Averaged_CPDAG_PC.jpg')
-ggnet2(d, label=V, main='Averaged CPDAG using PC')
+plot(d, label=V)
 dev.off()
 
 
